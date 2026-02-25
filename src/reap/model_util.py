@@ -1,10 +1,21 @@
-import torch
 import logging
+
+import torch
 
 logger = logging.getLogger(__name__)
 
 
 MODEL_ATTRS = {
+    "Qwen3_5MoeForCausalLM": {
+        "moe_block": "mlp",
+        "gate_proj": "gate_up_proj",
+        "down_proj": "down_proj",
+        "experts": "experts",
+        "fused": True,
+        "router": "gate",
+        "num_experts": "num_experts",
+        "num_experts_per_tok": "num_experts_per_tok",
+    },
     "Qwen3MoeForCausalLM": {
         "moe_block": "mlp",
         "gate_proj": "gate_proj",
@@ -237,11 +248,12 @@ def assert_tied_weights(model, clusters_labels):
                                     f"Max diff: {torch.abs(lora_weight - dom_lora_weight).max()}"
                                 )
 
+
 def get_super_expert_indices(observer_data, include_last_layers: bool = False):
     logger.info("Identifying super experts to preserve...")
     quantile = 99.5
     times = 10
-    all_max_activations = [layer['max_activations'] for layer in observer_data.values()]
+    all_max_activations = [layer["max_activations"] for layer in observer_data.values()]
     num_layers = len(all_max_activations)
     all_max_activations = torch.cat(all_max_activations).flatten()
     percentile_threshold = torch.quantile(all_max_activations, quantile / 100.0).item()
@@ -259,10 +271,16 @@ def get_super_expert_indices(observer_data, include_last_layers: bool = False):
         num_layers = int(num_layers * 0.75)
         super_experts_mask[num_layers:, :] = False
     super_expert_idx = torch.argwhere(super_experts_mask)
-    logger.info(f"Identified {super_experts_mask.sum().item()} super experts with threshold: {final_threshold:.4f}")
+    logger.info(
+        f"Identified {super_experts_mask.sum().item()} super experts with threshold: {final_threshold:.4f}"
+    )
     return super_expert_idx
+
 
 def register_llama_with_vllm():
     from vllm.model_executor.models import ModelRegistry
+
     print("Registering Llama4ForCausalLM with vLLM")
-    ModelRegistry.register_model("Llama4ForCausalLM", "vllm.model_executor.models.llama4:Llama4ForCausalLM")
+    ModelRegistry.register_model(
+        "Llama4ForCausalLM", "vllm.model_executor.models.llama4:Llama4ForCausalLM"
+    )

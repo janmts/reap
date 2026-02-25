@@ -1,24 +1,24 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from typing import Any, Optional
+
 import gc
+import logging
+import pathlib
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from functools import reduce
+from typing import Any, Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import re
-from dataclasses import dataclass
-import logging
-import pathlib
-from functools import reduce
 
 from reap.metrics import (
-    ttm_online,
-    get_routed_characteristic_activation,
-    ca_dist_online,
     OnlineStatsTracker,
+    ca_dist_online,
     get_distance_fn,
+    get_routed_characteristic_activation,
+    ttm_online,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -325,7 +325,9 @@ class MoETransformerObserver(BaseTransformerObserver):
         return layer_state
 
     def _hook_factory(self, module: nn.Module, layer_number: int) -> callable:
-        distance_fn = get_distance_fn("cosine") # always use cosine for online dist. metrics
+        distance_fn = get_distance_fn(
+            "cosine"
+        )  # always use cosine for online dist. metrics
         num_experts = reduce(
             getattr, self.hook_config.num_experts_attr_name.split("."), module
         )
@@ -445,9 +447,9 @@ class MoETransformerObserver(BaseTransformerObserver):
                 ).to(device="cpu")
 
                 # online_characteristic_activation_dist with expert frequency counts
-                self.state[layer_number]["online_characteristic_activation_dist"].update(
-                    online_characteristic_activation_dist, num_tokens
-                )
+                self.state[layer_number][
+                    "online_characteristic_activation_dist"
+                ].update(online_characteristic_activation_dist, num_tokens)
                 del online_characteristic_activation_dist
 
                 # router logit similarity -> must align with distance_fn shape expectations
@@ -482,9 +484,7 @@ class MoETransformerObserver(BaseTransformerObserver):
             weighted_ean_sum = torch.zeros(
                 num_experts, device=device, dtype=torch.float64
             )
-            reap = torch.zeros(
-                num_experts, device=device, dtype=torch.float32
-            )
+            reap = torch.zeros(num_experts, device=device, dtype=torch.float32)
             weighted_expert_frequency_sum = torch.zeros(
                 num_experts, device=device, dtype=torch.float64
             )
@@ -521,9 +521,7 @@ class MoETransformerObserver(BaseTransformerObserver):
                 weighted_ean_sum[i] = (
                     (ean_norm * active_router_weights).sum().to(device)
                 )
-                reap[i] = (
-                    (ean_norm * active_router_weights).mean().to(device)
-                )
+                reap[i] = (ean_norm * active_router_weights).mean().to(device)
 
                 # super experts
                 selected_activations = activations[i, active_mask, :]
@@ -542,12 +540,10 @@ class MoETransformerObserver(BaseTransformerObserver):
             )
             if reap.sum() == 0:
                 print("debug")
-            self.state[layer_number]["reap"].update(
-                reap, expert_frequency
-            )
+            self.state[layer_number]["reap"].update(reap, expert_frequency)
 
             # weighted_expert_frequency_sum
-            
+
             self.state[layer_number]["weighted_expert_frequency_sum"] += (
                 weighted_expert_frequency_sum.to(device="cpu")
             )
@@ -614,7 +610,16 @@ class Glm44MoEObserverHookConfig(MoETransformerObserverConfig):
     fused_experts: bool = False
 
 
+@dataclass
+class Qwen3_5MoEObserverHookConfig(MoETransformerObserverConfig):
+    module_class_name_to_hook_regex: Optional[str] = "Qwen3_5MoeSparseMoeBlock"
+    num_experts_attr_name: str = "gate.num_experts"
+    top_k_attr_name: str = "gate.top_k"
+    fused_experts: bool = True
+
+
 OBSERVER_CONFIG_REGISTRY = {
+    "Qwen3_5MoeForCausalLM": Qwen3_5MoEObserverHookConfig,
     "Qwen3MoeForCausalLM": Qwen3MoEObserverHookConfig,
     "NonUniformQwen3MoeForCausalLM": Qwen3MoEObserverHookConfig,
     "Llama4ForCausalLM": Llama4MoEObserverHookConfig,
