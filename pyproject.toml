@@ -18,7 +18,8 @@ dependencies = [
     "seaborn>=0.13.2",
     "torch==2.7.1",
     # "transformers==4.53.3",  # latest version working for ernie.
-    "transformers==4.55.0",
+    # "transformers==4.55.0", # Default old
+    "transformers>=5.1.0", # For qwen3.5
     "umap-learn>=0.5.7",
     "vllm==0.10.0",
     "livecodebench",
@@ -62,4 +63,3 @@ dev = [
 [tool.ruff]
 line-length = 88
 select = ["SIM"]
-
