@@ -8,26 +8,29 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    # --- Core pruning deps (all you need for REAP profiling + pruning) ---
     "accelerate>=1.7.0",
     "datasets>=3.6.0, <4.0.0",
-    "evalplus[vllm]>=0.3.1",
     "jupyter>=1.1.1",
-    "lm-eval[vllm,api]>=0.4.9.1",
     "matplotlib>=3.10.3",
     "python-dotenv>=1.1.0",
     "seaborn>=0.13.2",
-    "torch==2.7.1",
-    # "transformers==4.53.3",  # latest version working for ernie.
-    "transformers==4.55.0",
+    "torch>=2.8.0",
+    "transformers>=5.1.0",
     "umap-learn>=0.5.7",
-    "vllm==0.10.0",
-    "livecodebench",
     "deepspeed>=0.17.4",
     "trl>=0.21.0",
     "hatchling>=1.27.0",
-    # "flash-attn>=2.7.1,<=2.8.0", # required for xformers for Llama4. Might need to manually install with --no-build-isolation
-    # "flash-attn>=2.8.3",
     "wandb>=0.21.1",
+]
+
+[project.optional-dependencies]
+# Install with: uv pip install -e ".[eval]" if you need benchmarks
+eval = [
+    "vllm>=0.10.0",
+    "evalplus[vllm]>=0.3.1",
+    "lm-eval[vllm,api]>=0.4.9.1",
+    "livecodebench",
     "crfm-helm",
     "evalscope",
 ]
@@ -62,4 +65,3 @@ dev = [
 [tool.ruff]
 line-length = 88
 select = ["SIM"]
-
