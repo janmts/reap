@@ -24,7 +24,10 @@ from functools import partial
 import torch
 from datasets import Dataset, DatasetDict
 from transformers import AutoTokenizer, BatchEncoding
-TokensPrompt = None
+try:
+    # from vllm import TokensPrompt
+except ImportError:
+    TokensPrompt = None
 
 
 logger = logging.getLogger(__name__)
@@ -423,15 +426,7 @@ class WritingPromptsChatDataset(ChatDatasetProcessor):
 
 
 
-class CreativeWritingLMDataset(LMDatasetProcessor):
-    category_field: str = "category"
-    @staticmethod
-    def _map_fn(sample: dict[str, any]) -> dict[str, any]:
-        return sample
-
-
 DATASET_REGISTRY: dict[str, BaseDatasetProcessor] = {
-    "Timersofc/creative-writing-reap-calibration": CreativeWritingLMDataset,
     "m-a-p/CodeFeedback-Filtered-Instruction": CodeFeedbackChatDataset,
     "allenai/tulu-3-sft-mixture": TuluSFTMixtureChatDataset,
     "cais/mmlu": MmluChatDataset,

@@ -49,7 +49,7 @@ from reap.cluster import (
     kmeans_clustering
 )
 from reap.model_util import get_moe, assert_merge, MODEL_ATTRS, patched_model_map, get_super_expert_indices
-from reap.eval import run_evaluate
+# # from reap.eval import run_evaluate
 from reap.cluster_plots import plot_cluster_analysis
 from reap.metrics import get_distance_fn
 

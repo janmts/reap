@@ -13,7 +13,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, HfArgumentParser
 from lm_eval import evaluator
 from lm_eval.utils import make_table
 from evalplus.evaluate import evaluate as evalplus_evaluator
-from vllm.entrypoints.openai.api_server import run_server
+# from vllm.entrypoints.openai.api_server import run_server
 from vllm.engine.arg_utils import AsyncEngineArgs
 import uvloop
 
